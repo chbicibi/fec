@@ -1,9 +1,10 @@
 FC      = gfortran
-FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function
+FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function -static
 # FCFLAGS = -O2 -ffpe-trap=invalid,zero,overflow -fbacktrace -g
 # FCFLAGS = -fopenmp -static-libgfortran -static-libgcc
 
-DEST    = ../lib
+DEST_LIB = ../lib
+DEST_INC = ../include
 
 TARLIBD = libfec.dll
 TARLIBS = libfec.a
@@ -35,15 +36,15 @@ static: $(TARLIBS)
 
 $(TARLIBD): $(OBJS)
 	$(FC) $(FCFLAGS) -shared -o $@ $^ $(LIBOPT) $(LIBBLAS)
-	cp $@ $(DEST)
-	cp *.mod $(DEST)
-	cp *.smod $(DEST)
+	cp $@ $(DEST_LIB)
+	cp *.mod $(DEST_INC)
+	cp *.smod $(DEST_INC)
 
 $(TARLIBS): $(OBJS)
 	ar cr $@ $^
-	cp $@ $(DEST)
-	cp *.mod $(DEST)
-	cp *.smod $(DEST)
+	cp $@ $(DEST_LIB)
+	cp *.mod $(DEST_INC)
+	cp *.smod $(DEST_INC)
 
 %.o: %.f08
 	$(FC) $(FCFLAGS) -c -o $@ $<
