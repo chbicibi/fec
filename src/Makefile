@@ -38,12 +38,14 @@ $(TARLIBD): $(OBJS)
 	$(FC) $(FCFLAGS) -shared -o $@ $^ $(LIBOPT) $(LIBBLAS)
 	mkdir -p $(DEST_LIB) $(DEST_INC)
 	cp $@ $(DEST_LIB)
+	cp *.a $(DEST_LIB)
 	cp *.mod *.smod $(DEST_INC)
 
 $(TARLIBS): $(OBJS)
 	ar cr $@ $^
 	mkdir -p $(DEST_LIB) $(DEST_INC)
-	cp $@ $(DEST_LIB)
+	# cp $@ $(DEST_LIB)
+	cp *.a $(DEST_LIB)
 	cp *.mod *.smod $(DEST_INC)
 
 %.o: %.f08
@@ -56,7 +58,7 @@ $(TARLIBS): $(OBJS)
 	@:
 
 clean:
-	rm -f *.o *.mod *.smod $(DEST_INC)/*
+	rm -f *.o *.mod *.smod $(DEST_LIB)/* $(DEST_INC)/*
 
 
 ################################################################################

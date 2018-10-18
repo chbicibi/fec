@@ -1,3 +1,5 @@
+*.a
+*.dll
 *.o
 *.mod
 *.smod
