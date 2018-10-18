@@ -36,15 +36,15 @@ static: $(TARLIBS)
 
 $(TARLIBD): $(OBJS)
 	$(FC) $(FCFLAGS) -shared -o $@ $^ $(LIBOPT) $(LIBBLAS)
+	mkdir -p $(DEST_LIB) $(DEST_INC)
 	cp $@ $(DEST_LIB)
-	cp *.mod $(DEST_INC)
-	cp *.smod $(DEST_INC)
+	cp *.mod *.smod $(DEST_INC)
 
 $(TARLIBS): $(OBJS)
 	ar cr $@ $^
+	mkdir -p $(DEST_LIB) $(DEST_INC)
 	cp $@ $(DEST_LIB)
-	cp *.mod $(DEST_INC)
-	cp *.smod $(DEST_INC)
+	cp *.mod *.smod $(DEST_INC)
 
 %.o: %.f08
 	$(FC) $(FCFLAGS) -c -o $@ $<
