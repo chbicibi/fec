@@ -196,6 +196,7 @@ module ga_unit
   !   function crossover_order(ddum, parents) result(children)
   !     real(8), intent(in) :: ddum
   !     integer, intent(in) :: parents(:, :)
+  !     integer, allocatable :: children(:, :)
   !   end function crossover_order
   ! end interface
 

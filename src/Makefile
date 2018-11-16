@@ -1,5 +1,5 @@
 FC      = gfortran
-FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function -static
+FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function# -static
 # FCFLAGS = -O2 -ffpe-trap=invalid,zero,overflow -fbacktrace -g
 # FCFLAGS = -fopenmp -static-libgfortran -static-libgcc
 
@@ -59,6 +59,10 @@ $(TARLIBS): $(OBJS)
 
 clean:
 	rm -f *.o *.mod *.smod $(DEST_LIB)/* $(DEST_INC)/*
+
+
+wrap: wrapper_xover.f08
+	$(FC) $(FCFLAGS) -shared -o xover.dll $< $(LIBOPT) $(INCOPT)
 
 
 ################################################################################
