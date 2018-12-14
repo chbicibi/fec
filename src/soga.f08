@@ -60,6 +60,7 @@ module soga
 
     procedure :: prepare_calculation
     procedure :: init_population
+    procedure :: set_variables
 
     procedure :: run
     procedure :: evolution
@@ -170,6 +171,30 @@ module soga
       call this%init_indiv(this%population(i)%indiv)
     end do
   end subroutine init_population
+
+  subroutine set_variables(this, variables)
+    implicit none
+    class(TSOGA), intent(inout) :: this
+    real(8), intent(in) :: variables(:, :)
+    integer :: n, i
+
+    call this%set_prototype
+    if (allocated(this%population)) deallocate(this%population)
+    allocate(this%population(this%pop_size))
+
+    n = size(variables, 2)
+
+    do i = 1, this%pop_size
+      allocate(this%population(i)%indiv, source=this%prototype)
+      if (i <= n) then
+        call this%population(i)%indiv%set_variables(variables(:, i))
+      else
+        call this%init_indiv(this%population(i)%indiv)
+      end if
+    end do
+    call this%evaluate(this%population)
+    call this%calc_fitness(this%population)
+  end subroutine set_variables
 
 
   ! ============================================================================

@@ -97,6 +97,27 @@ submodule (ga_unit) ga_unit_selection
     if (this%uniq) rest(res) = .false.
   end subroutine call_selection1
 
+  subroutine call_selection11(this, probability, rest, res)
+    implicit none
+    class(TSelection), intent(in) :: this
+    real(8), intent(in) :: probability(:)
+    logical, intent(inout) :: rest(:)
+    integer, intent(out), allocatable :: res(:)
+    integer :: s, n, i
+
+    s = size(probability)
+    n = max(this%iparam, int(this%dparam * s))
+    allocate(res(this%num_selection))
+    do i = 1, this%num_selection
+      if (n > 0 .and. n < s) then
+        res(i) = this%proc(max(probability, 0d0), shuffle(rest, n))
+      else
+        res(i) = this%proc(max(probability, 0d0), rest)
+      end if
+      if (this%uniq) rest(res(i)) = .false.
+    end do
+  end subroutine call_selection11
+
   subroutine call_selection2(this, probability, res)
     implicit none
     class(TSelection), intent(in) :: this

@@ -28,9 +28,9 @@ module ga_unit
     contains
 
     generic :: initialize => init_selection1, init_selection2, init_selection3
-    generic :: call => call_selection1, call_selection2
+    generic :: call => call_selection1, call_selection11, call_selection2
     procedure :: init_selection1, init_selection2, init_selection3
-    procedure :: call_selection1, call_selection2
+    procedure :: call_selection1, call_selection11, call_selection2
     final :: destroy_selection
   end type TSelection
 
@@ -122,6 +122,13 @@ module ga_unit
       logical, intent(inout) :: rest(:)
       integer, intent(out) :: res
     end subroutine call_selection1
+
+    module subroutine call_selection11(this, probability, rest, res)
+      class(TSelection), intent(in) :: this
+      real(8), intent(in) :: probability(:)
+      logical, intent(inout) :: rest(:)
+      integer, intent(out), allocatable :: res(:)
+    end subroutine call_selection11
 
     module subroutine call_selection2(this, probability, res)
       class(TSelection), intent(in) :: this

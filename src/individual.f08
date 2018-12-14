@@ -11,6 +11,7 @@ module individual
     integer, allocatable :: ivariables(:)
     real(8), allocatable :: objectives(:)
     real(8), allocatable :: constraints(:)
+    logical :: init = .false.
     logical :: feasible = .true.
     logical :: evaluated = .false.
 
@@ -108,6 +109,7 @@ module individual
     integer, intent(in) :: variables(:)
 
     this%ivariables = variables
+    this%init = .true.
   end subroutine set_ivariables
 
   subroutine set_dvariables(this, variables)
@@ -116,6 +118,7 @@ module individual
     real(8), intent(in) :: variables(:)
 
     this%dvariables = variables
+    this%init = .true.
   end subroutine set_dvariables
 
 

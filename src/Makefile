@@ -9,7 +9,7 @@ DEST_INC = ../include
 TARLIBD = libfec.dll
 TARLIBS = libfec.a
 OBJS    = moeadc.o moead.o moead_init.o moeadi.o moead_unit.o tnsdm.o \
-          nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o\
+          nsga2c_dp.o nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o\
           ga_unit.o ga_unit_selection.o ga_unit_crossover.o ga_unit_mutation.o \
           basic_optimizer.o individual.o kriging.o problem.o matrix.o util.o interface.o
 
@@ -89,6 +89,7 @@ nsga2.o: interface.o util.o individual.o ga_unit.o problem.o soga.o
 nsga2_init.o: nsga2.o
 nsga2i.o: nsga2.o
 nsga2c.o: interface.o util.o individual.o ga_unit.o problem.o soga.o nsga2.o
+nsga2c_dp.o: interface.o util.o individual.o ga_unit.o problem.o soga.o nsga2.o nsga2c.o
 tnsdm.o: interface.o util.o individual.o ga_unit.o problem.o soga.o nsga2c.o
 tnsdm_1.o: tnsdm.o
 moead.o: interface.o util.o individual.o moead_unit.o ga_unit.o problem.o basic_optimizer.o
