@@ -369,29 +369,65 @@ module ga_unit
 
   ! ============================================================================
 
+  ! function crowding_distance(val, rank) result(distance)
+  !   implicit none
+  !   real(8), intent(in) :: val(:, :)
+  !   integer, intent(in) :: rank(:)
+  !   real(8), allocatable :: distance(:)
+  !   integer, allocatable :: order(:)
+  !   integer :: len, s, i, j
+
+  !   len = size(rank)
+  !   allocate(distance(len))
+  !   do i = 1, maxval(rank)
+  !     order = sort(val(1, :), pack(integers(len), rank == i))
+  !     s = size(order)
+  !     select case (s)
+  !     case (1)
+  !       distance(order) = huge(0d0)
+  !     case (2:)
+  !       distance(order) = [huge(0d0),                                           &
+  !                          ((val(1, order(j + 1)) - val(1, order(j - 1)) +      &
+  !                            val(2, order(j - 1)) - val(2, order(j + 1))) *     &
+  !                           safe_inv(abs(val(1, order(j)) - val(2, order(j)))), &
+  !                           j = 2, s - 1), huge(0d0)]
+  !     end select
+  !   end do
+  ! end function crowding_distance
+
   function crowding_distance(val, rank) result(distance)
     implicit none
     real(8), intent(in) :: val(:, :)
     integer, intent(in) :: rank(:)
     real(8), allocatable :: distance(:)
     integer, allocatable :: order(:)
-    integer :: len, s, i, j
+    real(8) :: vrange, norm
+    integer :: popsize, maxrank, numobj, numfront, i, j
 
-    len = size(rank)
-    allocate(distance(len))
-    do i = 1, maxval(rank)
-      order = sort(val(1, :), pack(integers(len), rank == i))
-      s = size(order)
-      select case (s)
-      case (1)
-        distance(order) = huge(0d0)
-      case (2:)
-        distance(order) = [huge(0d0),                                           &
-                           ((val(1, order(j + 1)) - val(1, order(j - 1)) +      &
-                             val(2, order(j - 1)) - val(2, order(j + 1))) *     &
-                            safe_inv(abs(val(1, order(j)) - val(2, order(j)))), &
-                            j = 2, s - 1), huge(0d0)]
-      end select
+    popsize = size(rank)
+    maxrank = maxval(rank)
+    numobj = size(val, dim=1)
+    allocate(distance(popsize))
+
+    do i = 1, maxrank
+      do j = 1, numobj
+        order = sort(val(j, :), pack(integers(popsize), rank == i))
+        numfront = size(order)
+
+        distance(order(1)) = huge(0d0)
+        distance(order(numfront)) = huge(0d0)
+
+        if (numfront <= 2) cycle
+
+        vrange = val(j, order(numfront)) - val(j, order(1))
+
+        if (vrange <= 0) cycle
+
+        norm = numobj * vrange
+
+        distance(order(2:numfront-1)) = distance(order(2:numfront-1)) + &
+          (val(j, order(3:numfront)) - val(j, order(1:numfront-2))) / norm
+      end do
     end do
   end function crowding_distance
 end module ga_unit

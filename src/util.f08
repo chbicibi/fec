@@ -186,7 +186,7 @@ module util
         offset(i + 1) = offset(i) + 1
       end if
     end do
-    table = integers(c) + pack(offset, mask)
+    allocate(table(c), source=integers(c) + pack(offset, mask))
     res = filled(s, .false.)
     res(table(shuffle(c, n))) = .true.
   end function lshuffle

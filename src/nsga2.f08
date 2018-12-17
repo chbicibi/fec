@@ -18,6 +18,7 @@ module nsga2
 
     procedure :: initialize_instance3, initialize_instance4
     procedure :: set_prototype1
+    procedure :: advance
     procedure :: calc_fitness
     procedure :: preserve_elite
     procedure :: save_result_elite
@@ -53,6 +54,30 @@ module nsga2
   ! ============================================================================
   ! calculation body
   ! ============================================================================
+
+  subroutine advance(this, next_population)
+    implicit none
+    class(TNSGA2), intent(inout) :: this
+    type(TPopulation), intent(inout), allocatable :: next_population(:)
+    type(TPopulation), allocatable :: temp_population(:)
+    integer, allocatable :: rank_index(:)
+    integer :: popsize, popsize_total
+
+    ! call move_alloc(from=next_population, to=this%population)
+    popsize = size(this%population)
+
+    popsize_total = popsize + size(next_population)
+
+    allocate(temp_population(popsize_total), source=[this%population, next_population])
+    call this%calc_fitness(temp_population)
+    rank_index = reverse(sort(temp_population%fitness))
+    print *, rank_index(1:10)
+
+    this%population = temp_population(rank_index(1:popsize))
+    call this%calc_fitness(this%population)
+    deallocate(next_population)
+    deallocate(temp_population)
+  end subroutine advance
 
   subroutine calc_fitness(this, population)
     implicit none

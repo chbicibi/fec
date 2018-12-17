@@ -64,6 +64,7 @@ module soga
 
     procedure :: run
     procedure :: evolution
+    procedure :: advance
     procedure :: reproduce
     procedure :: evaluate_pop
     procedure :: calc_fitness
@@ -275,7 +276,7 @@ module soga
     ! stop
     ! return
 
-    call move_alloc(from=next_population, to=this%population)
+    call this%advance(next_population)
   end subroutine evolution
 
   subroutine reproduce(this, index, children)
@@ -299,6 +300,14 @@ module soga
       call children(i)%clamp_variables(lower=0d0, upper=1d0)
     end do
   end subroutine reproduce
+
+  subroutine advance(this, next_population)
+    implicit none
+    class(TSOGA), intent(inout) :: this
+    type(TPopulation), intent(inout), allocatable :: next_population(:)
+
+    call move_alloc(from=next_population, to=this%population)
+  end subroutine advance
 
   subroutine evaluate_pop(this, population)
     implicit none
