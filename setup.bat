@@ -41,7 +41,7 @@ call :compile matrix
 call :compile kriging
 
 :: リンク
-call :exec "ar cr %lib_name% moeadc.o moead.o moead_init.o moeadi.o moead_unit.o tnsdm.o nsga2c_dp nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o ga_unit.o ga_unit_selection.o ga_unit_crossover.o ga_unit_mutation.o basic_optimizer.o individual.o kriging.o problem.o matrix.o util.o interface.o"
+call :exec "ar cr %lib_name% moeadc.o moead.o moead_init.o moeadi.o moead_unit.o tnsdm.o nsga2c_dp.o nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o ga_unit.o ga_unit_selection.o ga_unit_crossover.o ga_unit_mutation.o basic_optimizer.o individual.o kriging.o problem.o matrix.o util.o interface.o"
 
 :: ライブラリをコピー
 md %dest_lib% > NUL 2>&1
@@ -50,6 +50,8 @@ call :exec "copy /y *.a %dest_lib%"
 call :exec "copy /y *.mod %dest_inc%"
 call :exec "copy /y *.smod %dest_inc%"
 cd ..
+
+pause
 
 endlocal
 exit /b
