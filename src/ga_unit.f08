@@ -402,22 +402,23 @@ module ga_unit
     real(8), allocatable :: distance(:)
     integer, allocatable :: order(:)
     real(8) :: vrange, norm
-    integer :: popsize, maxrank, numobj, numfront, i, j
+    integer :: popsize, minrank, maxrank, numobj, numfront, i, j
 
     popsize = size(rank)
+    minrank = minval(rank)
     maxrank = maxval(rank)
     numobj = size(val, dim=1)
     allocate(distance(popsize))
 
-    do i = 1, maxrank
+    do i = minrank, maxrank
       do j = 1, numobj
         order = sort(val(j, :), pack(integers(popsize), rank == i))
         numfront = size(order)
 
+        if (numfront <= 2) cycle
+
         distance(order(1)) = huge(0d0)
         distance(order(numfront)) = huge(0d0)
-
-        if (numfront <= 2) cycle
 
         vrange = val(j, order(numfront)) - val(j, order(1))
 
