@@ -402,31 +402,45 @@ module ga_unit
     real(8), allocatable :: distance(:)
     integer, allocatable :: order(:)
     real(8) :: vrange, norm
-    integer :: popsize, maxrank, numobj, numfront, i, j
+    integer :: popsize, minrank, maxrank, numobj, numfront, i, j
+
+    print *, "DEBUB #CD0"
+    print *, shape(val)
+    print *, val
+    print *, shape(rank)
+    print *, rank
 
     popsize = size(rank)
+    minrank = minval(rank)
     maxrank = maxval(rank)
     numobj = size(val, dim=1)
     allocate(distance(popsize))
 
-    do i = 1, maxrank
+    do i = minrank, maxrank
       do j = 1, numobj
+        print *, "DEBUB #CD l0", i, j
         order = sort(val(j, :), pack(integers(popsize), rank == i))
         numfront = size(order)
+        print *, numfront
+
+        if (numfront <= 2) cycle
 
         distance(order(1)) = huge(0d0)
         distance(order(numfront)) = huge(0d0)
 
-        if (numfront <= 2) cycle
+        print *, "DEBUB #CD l1", i, j
 
         vrange = val(j, order(numfront)) - val(j, order(1))
+        print *, "DEBUB #CD l2", i, j
 
         if (vrange <= 0) cycle
+        print *, "DEBUB #CD l3", i, j
 
         norm = numobj * vrange
 
         distance(order(2:numfront-1)) = distance(order(2:numfront-1)) + &
           (val(j, order(3:numfront)) - val(j, order(1:numfront-2))) / norm
+        print *, "DEBUB #CD l4", i, j
       end do
     end do
   end function crowding_distance

@@ -144,7 +144,6 @@ module soga
     call this%mutation%initialize(this%mutation_type, 0.1d0, 20d0)
   end subroutine set_operator
 
-
   ! ============================================================================
   ! preprocessing
   ! ============================================================================

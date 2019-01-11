@@ -40,28 +40,49 @@ module tnsdm
     real(8) :: a = 0.1d0
     integer :: pop_size, i, j
 
+    if (this%num_con < 0) then
+      this%num_con = size(population(1)%indiv%constraints, dim=1)
+    end if
+
     pop_size = size(population)
 
+    print *, "DEBUG #0", this%num_con
     ! ------------------------------------------------------
     ! 作業用変数割付
     ! ------------------------------------------------------
     objectives = reshape([(population(i)%indiv%objectives, i = 1, this%pop_size)], &
                          [this%num_obj, this%pop_size])
+    print *, "DEBUG #0-1"
+
+    do i = 1, this%pop_size
+      print *, allocated(population(i)%indiv%constraints)
+      print *, size(population(i)%indiv%constraints), population(i)%indiv%constraints
+    end do
+
     constraints = reshape([(max(-population(i)%indiv%constraints, 0d0), i = 1, this%pop_size)], &
-                          [this%num_obj, this%pop_size])
+                          [this%num_con, this%pop_size])
+    print *, "DEBUG #0-2"
     feasible = [(this%population(i)%indiv%feasible, i = 1, this%pop_size)]
+
+    print *, "DEBUG #1"
 
     this%rank_con = rank_pareto(constraints)
     this%rank_obj = rank_pareto(objectives, this%rank_con)
+
+    print *, 'this%rank_con', this%rank_con
+    print *, 'this%rank_obj', this%rank_obj
 
     associate (n => this%pop_size, val => objectives)
       this%dominated = reshape([((dominatedp1(val(:, i), val(:, j)), j = 1, n), i = 1, n)], [n, n])
     end associate
 
+    print *, "DEBUG #2"
 
     allocate(rank(this%pop_size), source=this%rank_con*this%pop_size+this%rank_obj)
     allocate(order(this%pop_size), source=sort(rank))
     order(order) = integers(this%pop_size)
+
+    print *, "DEBUG #3"
 
     ! print "(100i5/)", this%rank_con
     ! print "(100i5/)", this%rank_obj
@@ -77,13 +98,17 @@ module tnsdm
     if (this%sharing) then
       ! population%crowding = crowding_distance(objectives, rank)
       ! population%crowding = min(crowding_distance(objectives, rank), 1d0)
+      print *, "DEBUG #3-0"
       population%crowding = tanh(crowding_distance(objectives, rank))
+      print *, "DEBUG #3-1"
       population%fitness = a * (1.0d0 - a) ** (order - population%crowding)
+      print *, "DEBUG #3-2"
       ! population%fitness = 1.0d0 / (order + 1 - population%crowding)
     else
       population%fitness = a * (1.0d0 - a) ** (order - 1)
       ! population%fitness = 1.0d0 / order
     end if
+    print *, "DEBUG #4"
 
     population%rank = rank_pareto(objectives, constraints, feasible, dominatedp)
 
@@ -92,8 +117,11 @@ module tnsdm
     else
       allocate(this%mask(this%pop_size), source=.true.)
     end if
+    print *, "DEBUG #5"
 
     where (order > this%pop_size / 2) this%mask = .false.
+
+    print *, "DEBUG #6"
   end subroutine calc_fitness
 
   subroutine select_parents(this, parents_index)
