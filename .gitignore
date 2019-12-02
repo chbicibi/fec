@@ -1,6 +1,8 @@
-*.a
-*.dll
-*.o
-*.mod
-*.smod
-__*__/
+*
+!*/
+!.gitignore
+!Makefile
+!*.a
+!*.bat
+!*.f08
+!*.md
