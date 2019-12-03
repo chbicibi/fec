@@ -68,6 +68,7 @@
 
 
 include "util.f08"
+include "interface.f08"
 
 
 module mod_nsga2
@@ -78,6 +79,9 @@ module mod_nsga2
         double precision, allocatable :: x(:)
         double precision, allocatable :: f(:)
         double precision, allocatable :: g(:)
+        double precision, allocatable :: fitness(:)
+        double precision, allocatable :: crowding(:)
+        integer :: rank
         logical :: is_eval = .false.
     end type TIndividual
 
@@ -191,6 +195,7 @@ program main
         print *, pop(1)%ind(i)%f
     end do
 
+
         ! 最適化ループ
 
         ! do i_gen = 1, n_gen
@@ -241,4 +246,60 @@ program main
             ind(i)%is_eval = .true.
         end do
     end subroutine evaluate
+
+    subroutine calc_rank(ind)
+        obj = reshape([(pop%ind(i)%f(n_f), i = 1, size(pop))], &
+                      [n_f, n_ind])
+
+        pop%rank = rank_pareto(obj)
+
+        if (.true.) then
+
+          ! pop%crowding = crowding_distance(objectives, pop%rank)
+          ! pop%crowding = min(crowding_distance(objectives, pop%rank), 1d0)
+          pop%crowding = tanh(crowding_distance(objectives, pop%rank))
+          pop%fitness = a * (1.0d0 - a) ** (pop%rank - pop%crowding)
+          ! pop%fitness = 1.0d0 / (pop%rank + 1 - pop%crowding)
+        else
+          pop%fitness = a * (1.0d0 - a) ** (pop%rank - 1)
+          ! pop%fitness = 1.0d0 / pop%rank
+        end if
+    end subroutine calc_rank
+
+    function rank_pareto_con2_proc(val, con, mask, proc) result(rank)
+        real(8), intent(in) :: val(:, :), con(:, :)
+        logical, intent(in) :: mask(:)
+        procedure(func_2d_2d_1l_l) :: proc
+        integer, allocatable :: rank(:)
+        integer :: n, i, j
+
+        n = size(val, dim=2)
+        rank = rank_pareto_core([((proc(val(:, [i, j]), con(:, [i, j]), mask([i, j])), &
+                                   j = 1, n), i = 1, n)], n)
+    end function rank_pareto_con2_proc
+
+    function rank_pareto_core(dominated, n) result(rank)
+        logical, intent(in) :: dominated(n, n)
+        integer, intent(in) :: n
+        integer, allocatable :: rank(:)
+        integer, allocatable :: num_dominated(:)
+        logical, allocatable :: front_mask(:)
+        integer :: rank_no, i
+
+        rank = filled(n, 0)
+        ! num_dominated = [(count(dominated(n*i+1:n*(i+1))), i = 0, n - 1)]
+        allocate(num_dominated(n), source=[(count(dominated(:, i)), i = 1, n)])
+
+        do rank_no = 1, n
+            front_mask = rank == 0 .and. num_dominated == 0
+            where (front_mask) rank = rank_no
+            if (all(rank > 0)) exit
+            do i = 1, n
+                ! if (rank(i) == 0) num_dominated(i) = num_dominated(i) - &
+                !                     count(front_mask .and. dominated(n*(i-1)+1:n*i))
+                if (rank(i) == 0) num_dominated(i) = num_dominated(i) - &
+                    count(front_mask .and. dominated(:, i))
+            end do
+        end do
+    end function rank_pareto_core
 end program main
