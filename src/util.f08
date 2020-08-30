@@ -8,7 +8,7 @@ module util
   public :: filled, integers, mask_index
   public :: norm, distance, normalize, safe_inv
   public :: str, join, nformat, nformat1
-  public :: set_randomseed, elapsed_time, passign
+  public :: set_randomseed, elapsed_seconds, elapsed_time, passign
   public :: count_lines
 
   type :: string
@@ -186,7 +186,7 @@ module util
         offset(i + 1) = offset(i) + 1
       end if
     end do
-    allocate(table(c), source=integers(c) + pack(offset, mask))
+    table = integers(c) + pack(offset, mask)
     res = filled(s, .false.)
     res(table(shuffle(c, n))) = .true.
   end function lshuffle
@@ -593,7 +593,7 @@ module util
   ! timer
   ! ============================================================================
 
-  subroutine elapsed_time(start_time)
+  real(8) function elapsed_seconds(start_time)
     implicit none
     integer, intent(in) :: start_time
     integer :: end_time, t_rate, t_max, diff
@@ -604,7 +604,15 @@ module util
     else
       diff = end_time - start_time
     endif
-    print "(a/es10.3e2a)", "Evaluation took:", dble(diff) / t_rate, " seconds of real time"
+    elapsed_seconds = dble(diff) / t_rate
+  end function elapsed_seconds
+
+
+  subroutine elapsed_time(start_time)
+    implicit none
+    integer, intent(in) :: start_time
+    print "(a/es10.3e2a)", "Evaluation took:", elapsed_seconds(start_time), &
+                           " seconds of real time"
   end subroutine elapsed_time
 
 

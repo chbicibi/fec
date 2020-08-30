@@ -12,6 +12,7 @@ module soga
 
   type :: TPopulation
     class(TIndiv), allocatable :: indiv
+    logical :: init     = .false.
     integer :: rank     = -1
     real(8) :: fitness  = 0d0
     real(8) :: crowding = 0d0
@@ -45,6 +46,7 @@ module soga
 
     generic :: initialize => initialize_instance1, initialize_instance2
 
+    generic :: run => run_default, run_with_hook
     generic :: evaluate => evaluate_pop
     generic :: save_result => save_result_default, save_result_elite
     generic :: save_history => save_history_default, save_history_elite
@@ -60,11 +62,9 @@ module soga
 
     procedure :: prepare_calculation
     procedure :: init_population
-    procedure :: set_variables
 
-    procedure :: run
+    procedure :: run_default, run_with_hook
     procedure :: evolution
-    procedure :: advance
     procedure :: reproduce
     procedure :: evaluate_pop
     procedure :: calc_fitness
@@ -153,6 +153,9 @@ module soga
     implicit none
     class(TSOGA), intent(inout) :: this
 
+    this%current_step = 0
+    call system_clock(this%start_time)
+
     call this%init_population
     call this%evaluate(this%population)
     call this%calc_fitness(this%population)
@@ -169,56 +172,63 @@ module soga
 
     do i = 1, this%pop_size
       allocate(this%population(i)%indiv, source=this%prototype)
+      allocate(this%population(i)%indiv%parents_id, source=[-1, -1])
       call this%init_indiv(this%population(i)%indiv)
     end do
+    this%population%init = .true.
   end subroutine init_population
-
-  subroutine set_variables(this, variables)
-    implicit none
-    class(TSOGA), intent(inout) :: this
-    real(8), intent(in) :: variables(:, :)
-    integer :: n, i
-
-    call this%set_prototype
-    if (allocated(this%population)) deallocate(this%population)
-    allocate(this%population(this%pop_size))
-
-    n = size(variables, 2)
-
-    do i = 1, this%pop_size
-      allocate(this%population(i)%indiv, source=this%prototype)
-      if (i <= n) then
-        call this%population(i)%indiv%set_variables(variables(:, i))
-      else
-        call this%init_indiv(this%population(i)%indiv)
-      end if
-    end do
-    call this%evaluate(this%population)
-    call this%calc_fitness(this%population)
-  end subroutine set_variables
 
 
   ! ============================================================================
   ! calculation body
   ! ============================================================================
 
-  subroutine run(this, num_generation)
+  subroutine run_default(this, num_generation)
     implicit none
     class(TSOGA), intent(inout) :: this
     integer, intent(in) :: num_generation
     integer :: offset, i
 
     call this%alloc_history(num_generation, offset)
-    call this%logger(0)
+    call this%logger(0, num_generation)
 
     do i = 1, num_generation
+      this%current_step = i
       call this%evolution
       call this%keep_population(i + offset)
-      call this%logger(i)
+      call this%logger(i, num_generation)
     end do
 
-    call this%logger(-1)
-  end subroutine run
+    call this%logger(-1, num_generation)
+  end subroutine run_default
+
+  subroutine run_with_hook(this, num_generation, proc)
+    implicit none
+
+    interface
+      module subroutine proc(args)
+        class(TSOGA), intent(inout) :: args
+      end subroutine proc
+    end interface
+
+    class(TSOGA), intent(inout) :: this
+    integer, intent(in) :: num_generation
+    integer :: offset, i
+
+    call this%alloc_history(num_generation, offset)
+    call this%logger(0, num_generation)
+    call proc(this)
+
+    do i = 1, num_generation
+      this%current_step = i
+      call this%evolution
+      call this%keep_population(i + offset)
+      call this%logger(i, num_generation)
+      call proc(this)
+    end do
+
+    call this%logger(-1, num_generation)
+  end subroutine run_with_hook
 
   subroutine evolution(this)
     implicit none
@@ -262,6 +272,7 @@ module soga
       if (quota == 0) c = c + 1
     end do
 
+    next_population%init = .true.
     call this%evaluate(next_population)
     call this%calc_fitness(next_population)
 
@@ -276,7 +287,7 @@ module soga
     ! stop
     ! return
 
-    call this%advance(next_population)
+    call move_alloc(from=next_population, to=this%population)
   end subroutine evolution
 
   subroutine reproduce(this, index, children)
@@ -285,29 +296,24 @@ module soga
     integer, intent(in) :: index(:)
     class(TIndiv), intent(out), allocatable :: children(:)
     real(8), allocatable :: parents_value(:, :), children_value(:, :)
+    integer, allocatable :: parents_id(:)
     integer :: i
 
     parents_value = reshape([(this%population(index(i))%indiv%dvariables, i = 1, 2)], &
                             [this%num_var, 2])
+    parents_id = [(this%population(index(i))%indiv%id, i = 1, 2)]
 
     call this%crossover%call(parents_value, children_value)
     allocate(children(size(children_value, dim=2)), source=this%prototype)
 
     do i = 1, size(children)
+      allocate(children(i)%parents_id, source=parents_id)
       call children(i)%set_variables(children_value(:, i))
       call children(i)%clamp_variables(lower=0d0, upper=1d0)
       call this%mutation%call(children(i)%dvariables)
       call children(i)%clamp_variables(lower=0d0, upper=1d0)
     end do
   end subroutine reproduce
-
-  subroutine advance(this, next_population)
-    implicit none
-    class(TSOGA), intent(inout) :: this
-    type(TPopulation), intent(inout), allocatable :: next_population(:)
-
-    call move_alloc(from=next_population, to=this%population)
-  end subroutine advance
 
   subroutine evaluate_pop(this, population)
     implicit none
@@ -316,6 +322,7 @@ module soga
     integer :: i
 
     do i = 1, size(population)
+      print *, "evaluate:", i, "/", size(population)
       call this%evaluate(population(i)%indiv)
     end do
   end subroutine evaluate_pop
@@ -407,12 +414,12 @@ module soga
     integer :: unit, i
 
     open(newunit=unit, file=filename)
-      call this%population(1)%indiv%print_header(unit)
+      call this%population(1)%indiv%print_header_wv(unit)
       write(unit, "(a)") ",fitness"
 
       do i = 1, this%pop_size
         if (elite == "all" .or. xor(elite == "only", this%population(i)%rank > 1)) then
-          call this%print_indiv(this%population(i)%indiv, unit)
+          call this%print_indiv(this%population(i)%indiv, unit, .true.)
           write(unit, "(','es15.8)") this%population(i)%fitness
         end if
       end do
@@ -439,6 +446,8 @@ module soga
       write(unit, "(a)") ",fitness"
 
       do j = 1, size(this%history, dim=2)
+        if (.not. this%history(1, j)%init) exit
+
         if (elite == "best") then
           index = minloc(this%history(:, j)%rank, dim=1)
           write(unit, "(i0',')", advance='no') j - 1

@@ -1,5 +1,6 @@
 FC      = gfortran
-FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function# -static
+FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function -Wno-uninitialized -Wno-conversion -static -ffree-line-length-0 -std=gnu -fbacktrace -fbounds-check
+# FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function# -static
 # FCFLAGS = -O2 -ffpe-trap=invalid,zero,overflow -fbacktrace -g
 # FCFLAGS = -fopenmp -static-libgfortran -static-libgcc
 
@@ -9,7 +10,7 @@ DEST_INC = ../include
 TARLIBD = libfec.dll
 TARLIBS = libfec.a
 OBJS    = moeadc.o moead.o moead_init.o moeadi.o moead_unit.o tnsdm.o \
-          nsga2c_dp.o nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o\
+          nsga2c.o nsga2.o nsga2_init.o nsga2i.o soga.o soga_init.o sogai.o\
           ga_unit.o ga_unit_selection.o ga_unit_crossover.o ga_unit_mutation.o \
           basic_optimizer.o individual.o kriging.o problem.o matrix.o util.o interface.o
 

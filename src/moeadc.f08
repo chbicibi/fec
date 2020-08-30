@@ -67,10 +67,10 @@ module moeadc
   ! IO
   ! ============================================================================
 
-  subroutine logger(this, n)
+  subroutine logger(this, n, total)
     implicit none
     class(TMOEADC), intent(in) :: this
-    integer, intent(in) :: n
+    integer, intent(in) :: n, total
 
     if (n == 0) then
       print "(2a)", "Start: ", this%problem_type
@@ -89,12 +89,12 @@ module moeadc
     integer :: unit, i
 
     open(newunit=unit, file=filename)
-      call this%population(1)%indiv%print_header(unit)
+      call this%population(1)%indiv%print_header_wv(unit)
       write(unit, *)
 
       do i = 1, this%pop_size
         if (feasible == "all" .or. xor(feasible == "only", .not. this%population(i)%indiv%feasible)) then
-          call this%print_indiv(this%population(i)%indiv, unit)
+          call this%print_indiv(this%population(i)%indiv, unit, .true.)
           write(unit, *)
         end if
       end do

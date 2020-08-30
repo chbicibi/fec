@@ -28,9 +28,9 @@ module ga_unit
     contains
 
     generic :: initialize => init_selection1, init_selection2, init_selection3
-    generic :: call => call_selection1, call_selection11, call_selection2
+    generic :: call => call_selection1, call_selection2
     procedure :: init_selection1, init_selection2, init_selection3
-    procedure :: call_selection1, call_selection11, call_selection2
+    procedure :: call_selection1, call_selection2
     final :: destroy_selection
   end type TSelection
 
@@ -123,13 +123,6 @@ module ga_unit
       integer, intent(out) :: res
     end subroutine call_selection1
 
-    module subroutine call_selection11(this, probability, rest, res)
-      class(TSelection), intent(in) :: this
-      real(8), intent(in) :: probability(:)
-      logical, intent(inout) :: rest(:)
-      integer, intent(out), allocatable :: res(:)
-    end subroutine call_selection11
-
     module subroutine call_selection2(this, probability, res)
       class(TSelection), intent(in) :: this
       real(8), intent(in) :: probability(:)
@@ -203,7 +196,6 @@ module ga_unit
   !   function crossover_order(ddum, parents) result(children)
   !     real(8), intent(in) :: ddum
   !     integer, intent(in) :: parents(:, :)
-  !     integer, allocatable :: children(:, :)
   !   end function crossover_order
   ! end interface
 
@@ -369,66 +361,29 @@ module ga_unit
 
   ! ============================================================================
 
-  ! function crowding_distance(val, rank) result(distance)
-  !   implicit none
-  !   real(8), intent(in) :: val(:, :)
-  !   integer, intent(in) :: rank(:)
-  !   real(8), allocatable :: distance(:)
-  !   integer, allocatable :: order(:)
-  !   integer :: len, s, i, j
-
-  !   len = size(rank)
-  !   allocate(distance(len))
-  !   do i = 1, maxval(rank)
-  !     order = sort(val(1, :), pack(integers(len), rank == i))
-  !     s = size(order)
-  !     select case (s)
-  !     case (1)
-  !       distance(order) = huge(0d0)
-  !     case (2:)
-  !       distance(order) = [huge(0d0),                                           &
-  !                          ((val(1, order(j + 1)) - val(1, order(j - 1)) +      &
-  !                            val(2, order(j - 1)) - val(2, order(j + 1))) *     &
-  !                           safe_inv(abs(val(1, order(j)) - val(2, order(j)))), &
-  !                           j = 2, s - 1), huge(0d0)]
-  !     end select
-  !   end do
-  ! end function crowding_distance
-
   function crowding_distance(val, rank) result(distance)
     implicit none
     real(8), intent(in) :: val(:, :)
     integer, intent(in) :: rank(:)
     real(8), allocatable :: distance(:)
     integer, allocatable :: order(:)
-    real(8) :: vrange, norm
-    integer :: popsize, minrank, maxrank, numobj, numfront, i, j
+    integer :: len, s, i, j
 
-    popsize = size(rank)
-    minrank = minval(rank)
-    maxrank = maxval(rank)
-    numobj = size(val, dim=1)
-    allocate(distance(popsize))
-
-    do i = minrank, maxrank
-      do j = 1, numobj
-        order = sort(val(j, :), pack(integers(popsize), rank == i))
-        numfront = size(order)
-
-        if (numfront <= 2) cycle
-
-        distance(order(1)) = huge(0d0)
-        distance(order(numfront)) = huge(0d0)
-
-        vrange = val(j, order(numfront)) - val(j, order(1))
-
-        if (vrange <= 0) cycle
-
-        norm = numobj * vrange
-
-        distance(order(2:numfront-1)) = distance(order(2:numfront-1)) + &
-          (val(j, order(3:numfront)) - val(j, order(1:numfront-2))) / norm
-      end do
+    len = size(rank)
+    allocate(distance(len))
+    do i = 1, maxval(rank)
+      order = sort(val(1, :), pack(integers(len), rank == i))
+      s = size(order)
+      select case (s)
+      case (1)
+        distance(order) = huge(0d0)
+      case (2:)
+        distance(order) = [huge(0d0),                                           &
+                           ((val(1, order(j + 1)) - val(1, order(j - 1)) +      &
+                             val(2, order(j - 1)) - val(2, order(j + 1))) *     &
+                            safe_inv(abs(val(1, order(j)) - val(2, order(j)))), &
+                            j = 2, s - 1), huge(0d0)]
+      end select
     end do
   end function crowding_distance
 end module ga_unit

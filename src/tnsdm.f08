@@ -40,14 +40,6 @@ module tnsdm
     real(8) :: a = 0.1d0
     integer :: pop_size, i, j
 
-    if (size(population) == 0) then
-      return
-    end if
-
-    if (this%num_con < 0) then
-      this%num_con = size(population(1)%indiv%constraints, dim=1)
-    end if
-
     pop_size = size(population)
 
     ! ------------------------------------------------------
@@ -56,7 +48,7 @@ module tnsdm
     objectives = reshape([(population(i)%indiv%objectives, i = 1, this%pop_size)], &
                          [this%num_obj, this%pop_size])
     constraints = reshape([(max(-population(i)%indiv%constraints, 0d0), i = 1, this%pop_size)], &
-                          [this%num_con, this%pop_size])
+                          [this%num_obj, this%pop_size])
     feasible = [(this%population(i)%indiv%feasible, i = 1, this%pop_size)]
 
     this%rank_con = rank_pareto(constraints)

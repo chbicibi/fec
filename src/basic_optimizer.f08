@@ -8,10 +8,12 @@ module basic_optimizer
   public :: TOptimizer
 
   type :: TOptimizer
-    integer :: num_var = -1
-    integer :: num_obj = -1
-    integer :: num_con = -1
-    integer :: pop_size = -1
+    integer :: current_step = 0
+    integer :: start_time = 0
+    integer :: num_var
+    integer :: num_obj
+    integer :: num_con
+    integer :: pop_size
 
     logical :: show_log = .true.
 
@@ -127,10 +129,10 @@ module basic_optimizer
   ! IO
   ! ============================================================================
 
-  subroutine logger(this, n)
+  subroutine logger(this, n, total)
     implicit none
     class(TOptimizer), intent(in) :: this
-    integer, intent(in) :: n
+    integer, intent(in) :: n, total
 
     if (.not. this%show_log) return
 
@@ -138,21 +140,30 @@ module basic_optimizer
       print "(2a)", "Start: ", this%problem_type
     else if (n == -1) then
       print "(2a/)", "End: ", this%problem_type
-    else if (mod(n, 100) == 0) then
+    else if (mod(n, 1) == 0) then
       print "(a i0 a)", "Progress: ", n, " steps finished"
     end if
   end subroutine logger
 
-  subroutine print_indiv(this, indiv, unit)
+  subroutine print_indiv(this, indiv, unit, with_var)
     implicit none
     class(TOptimizer), intent(in) :: this
     class(TIndiv), intent(in) :: indiv
     integer, intent(in) :: unit
+    logical, intent(in), optional :: with_var
 
-    if (associated(this%problem%scaling_func)) then
-      call indiv%print(unit, this%problem%scaling_func)
+    if (present(with_var) .and. with_var) then
+      if (associated(this%problem%scaling_func)) then
+        call indiv%print_wv(unit, this%problem%scaling_func)
+      else
+        call indiv%print_wv(unit)
+      end if
     else
-      call indiv%print(unit)
+      if (associated(this%problem%scaling_func)) then
+        call indiv%print(unit, this%problem%scaling_func)
+      else
+        call indiv%print(unit)
+      end if
     end if
   end subroutine print_indiv
 
