@@ -71,7 +71,7 @@ module nsga2
     allocate(temp_population(popsize_total), source=[this%population, next_population])
     call this%calc_fitness(temp_population)
     rank_index = reverse(sort(temp_population%fitness))
-    print *, rank_index(1:10)
+    ! print *, rank_index(1:10)
 
     this%population = temp_population(rank_index(1:popsize))
     call this%calc_fitness(this%population)
@@ -114,6 +114,9 @@ module nsga2
     integer, intent(out) :: num_elite
     integer :: i
 
+    num_elite = 0
+    return
+
     if (this%elite_preservation) then
       ! num_elite = count(this%population%rank == 1)
       num_elite = 0
@@ -141,12 +144,12 @@ module nsga2
     integer :: unit, i
 
     open(newunit=unit, file=filename)
-      call this%population(1)%indiv%print_header(unit)
+      call this%population(1)%indiv%print_header_wv(unit)
       write(unit, "(a)") ",rank,fitness,crowding-dist"
 
       do i = 1, this%pop_size
         if (elite == "all" .or. xor(elite == "only", this%population(i)%rank > 1)) then
-          call this%print_indiv(this%population(i)%indiv, unit)
+          call this%print_indiv(this%population(i)%indiv, unit, .true.)
           write(unit, "(','i0,2(','es15.8))") this%population(i)%rank,    &
                                               this%population(i)%fitness, &
                                               this%population(i)%crowding
@@ -164,19 +167,24 @@ module nsga2
     open(newunit=unit, file=filename)
       write(unit, "(a)", advance='no') "step,"
       call this%population(1)%indiv%print_header(unit)
-      write(unit, "(a)") ",rank,fitness,crowding-dist"
+      write(unit, "(a)") ",rank,fitness,crowding-dist,pid1,pid2"
 
-      do j = 1, size(this%history, dim=2)
-        do i = 1, this%pop_size
+      outer: do j = 1, size(this%history, dim=2)
+        inner: do i = 1, this%pop_size
+          if (.not. this%history(i, j)%init) exit outer
+
           if (elite == "all" .or. xor(elite == "only", this%history(i, j)%rank > 1)) then
             write(unit, "(i0',')", advance='no') j - 1
             call this%print_indiv(this%history(i, j)%indiv, unit)
-            write(unit, "(','i0,2(','es15.8))") this%history(i, j)%rank,    &
-                                                this%history(i, j)%fitness, &
-                                                this%history(i, j)%crowding
+
+            write(unit, "(','i0,2(','es15.8),2(','i0))") &
+              this%history(i, j)%rank,      &
+              this%history(i, j)%fitness,   &
+              this%history(i, j)%crowding,  &
+              this%history(i, j)%indiv%parents_id
           end if
-        end do
-      end do
+        end do inner
+      end do outer
     close(unit)
   end subroutine save_history_elite
 

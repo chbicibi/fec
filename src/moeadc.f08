@@ -67,10 +67,10 @@ module moeadc
   ! IO
   ! ============================================================================
 
-  subroutine logger(this, n)
+  subroutine logger(this, n, total)
     implicit none
     class(TMOEADC), intent(in) :: this
-    integer, intent(in) :: n
+    integer, intent(in) :: n, total
 
     if (n == 0) then
       print "(2a)", "Start: ", this%problem_type
@@ -89,12 +89,12 @@ module moeadc
     integer :: unit, i
 
     open(newunit=unit, file=filename)
-      call this%population(1)%indiv%print_header(unit)
+      call this%population(1)%indiv%print_header_wv(unit)
       write(unit, *)
 
       do i = 1, this%pop_size
         if (feasible == "all" .or. xor(feasible == "only", .not. this%population(i)%indiv%feasible)) then
-          call this%print_indiv(this%population(i)%indiv, unit)
+          call this%print_indiv(this%population(i)%indiv, unit, .true.)
           write(unit, *)
         end if
       end do
@@ -110,17 +110,20 @@ module moeadc
     open(newunit=unit, file=filename)
       write(unit, "(a)", advance='no') "step,"
       call this%population(1)%indiv%print_header(unit)
-      write(unit, *)
+      write(unit, "(a)") ",pid1,pid2"
 
-      do j = 1, size(this%history, dim=2)
-        do i = 1, this%pop_size
+      outer: do j = 1, size(this%history, dim=2)
+        inner: do i = 1, this%pop_size
+          if (.not. this%history(i, j)%init) exit outer
+
           if (feasible == "all" .or. xor(feasible == "only", .not. this%history(i, j)%indiv%feasible)) then
             write(unit, "(i0',')", advance='no') j - 1
             call this%print_indiv(this%history(i, j)%indiv, unit)
-            write(unit, *)
+            write(unit, "(i0','i0)") &
+              this%history(i, j)%indiv%parents_id
           end if
-        end do
-      end do
+        end do inner
+      end do outer
     close(unit)
   end subroutine save_history_feasible
 

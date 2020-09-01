@@ -13,6 +13,8 @@ module moead
 
   type :: TPopulation
     class(TIndiv), allocatable :: indiv
+    logical :: init     = .false.
+
     real(8), allocatable :: weight(:)
     integer, allocatable :: table(:)
     real(8), allocatable :: fitness(:)
@@ -293,15 +295,15 @@ module moead
     integer :: offset, i
 
     call this%alloc_history(num_generation, offset)
-    call this%logger(0)
+    call this%logger(0, num_generation)
 
     do i = 1, num_generation
       call this%evolution
       call this%keep_population(i + offset)
-      call this%logger(i)
+      call this%logger(i, num_generation)
     end do
 
-    call this%logger(-1)
+    call this%logger(-1, num_generation)
   end subroutine run
 
   subroutine evolution(this)
@@ -383,11 +385,11 @@ module moead
     integer :: unit, i
 
     open(newunit=unit, file=filename)
-      call this%population(1)%indiv%print_header(unit)
+      call this%population(1)%indiv%print_header_wv(unit)
       write(unit, *)
 
       do i = 1, this%pop_size
-        call this%print_indiv(this%population(i)%indiv, unit)
+        call this%print_indiv(this%population(i)%indiv, unit, .true.)
         write(unit, *)
       end do
     close(unit)

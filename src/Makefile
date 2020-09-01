@@ -1,5 +1,6 @@
 FC      = gfortran
-FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function# -static
+FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function -Wno-uninitialized -Wno-conversion -static -ffree-line-length-0 -std=gnu -fbacktrace -fbounds-check
+# FCFLAGS = -O2 -Wall -Wno-unused-dummy-argument -Wno-unused-function# -static
 # FCFLAGS = -O2 -ffpe-trap=invalid,zero,overflow -fbacktrace -g
 # FCFLAGS = -fopenmp -static-libgfortran -static-libgcc
 
