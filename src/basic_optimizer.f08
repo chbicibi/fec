@@ -10,10 +10,10 @@ module basic_optimizer
   type :: TOptimizer
     integer :: current_step = 0
     integer :: start_time = 0
-    integer :: num_var
-    integer :: num_obj
-    integer :: num_con
-    integer :: pop_size
+    integer :: num_var = -1
+    integer :: num_obj = -1
+    integer :: num_con = -1
+    integer :: pop_size = -1
 
     logical :: show_log = .true.
 

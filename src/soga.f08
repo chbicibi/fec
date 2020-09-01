@@ -202,6 +202,30 @@ module soga
     call this%logger(-1, num_generation)
   end subroutine run_default
 
+
+  ! ============================================================================
+  ! calculation body
+  ! ============================================================================
+
+  subroutine run_default(this, num_generation)
+    implicit none
+    class(TSOGA), intent(inout) :: this
+    integer, intent(in) :: num_generation
+    integer :: offset, i
+
+    call this%alloc_history(num_generation, offset)
+    call this%logger(0, num_generation)
+
+    do i = 1, num_generation
+      this%current_step = i
+      call this%evolution
+      call this%keep_population(i + offset)
+      call this%logger(i, num_generation)
+    end do
+
+    call this%logger(-1, num_generation)
+  end subroutine run_default
+
   subroutine run_with_hook(this, num_generation, proc)
     implicit none
 
@@ -322,7 +346,7 @@ module soga
     integer :: i
 
     do i = 1, size(population)
-      print *, "evaluate:", i, "/", size(population)
+      ! print "(2(a,i0))", "evaluate: ", i, "/", size(population)
       call this%evaluate(population(i)%indiv)
     end do
   end subroutine evaluate_pop
@@ -443,26 +467,31 @@ module soga
     open(newunit=unit, file=filename)
       write(unit, "(a)", advance='no') "step,"
       call this%population(1)%indiv%print_header(unit)
-      write(unit, "(a)") ",fitness"
+      write(unit, "(a)") ",fitness,pid1,pid2"
 
-      do j = 1, size(this%history, dim=2)
-        if (.not. this%history(1, j)%init) exit
-
+      outer: do j = 1, size(this%history, dim=2)
         if (elite == "best") then
+          if (.not. this%history(1, j)%init) exit outer
+
           index = minloc(this%history(:, j)%rank, dim=1)
           write(unit, "(i0',')", advance='no') j - 1
           call this%print_indiv(this%history(index, j)%indiv, unit)
-          write(unit, "(','es15.8)") this%history(index, j)%fitness
+          write(unit, "(','es15.8,2(','i0))") this%history(index, j)%fitness,  &
+              this%history(i, j)%indiv%parents_id
+
         else
-          do i = 1, this%pop_size
+          inner: do i = 1, this%pop_size
+            if (.not. this%history(i, j)%init) exit outer
+
             if (elite == "all" .or. xor(elite == "only", this%history(i, j)%rank > 1)) then
               write(unit, "(i0',')", advance='no') j - 1
               call this%print_indiv(this%history(i, j)%indiv, unit)
-              write(unit, "(','es15.8)") this%history(i, j)%fitness
+              write(unit, "(','es15.8,2(','i0))") this%history(i, j)%fitness,  &
+              this%history(i, j)%indiv%parents_id
             end if
-          end do
+          end do inner
         end if
-      end do
+      end do outer
     close(unit)
   end subroutine save_history_elite
 

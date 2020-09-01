@@ -26,6 +26,7 @@ module individual
     generic :: print => print_u, print_up
     generic :: print_wv => print_wv_u, print_wv_up
     generic :: print_header => print_header_u
+    generic :: print_wv => print_wv_u, print_wv_up
     generic :: print_header_wv => print_header_wv_u
 
     procedure :: set_id
@@ -41,6 +42,8 @@ module individual
     procedure :: print_wv_u => print_wv_d
     procedure :: print_wv_up => print_wv_dp
     procedure :: print_header_u => print_header_d
+    procedure :: print_wv_u => print_wv_d
+    procedure :: print_wv_up => print_wv_dp
     procedure :: print_header_wv_u => print_header_wv_d
 
     final :: destroy_instance
@@ -55,6 +58,7 @@ module individual
     procedure :: print_u => print_i
     procedure :: print_wv_u => print_wv_i
     procedure :: print_header_u => print_header_i
+    procedure :: print_wv_u => print_wv_i
     procedure :: print_header_wv_u => print_header_wv_i
   end type TIndivI
 
@@ -77,6 +81,8 @@ module individual
     procedure :: print_wv_u => print_wv_dc
     procedure :: print_wv_up => print_wv_dcp
     procedure :: print_header_u => print_header_dc
+    procedure :: print_wv_u => print_wv_dc
+    procedure :: print_wv_up => print_wv_dcp
     procedure :: print_header_wv_u => print_header_wv_dc
   end type TIndivC
 
@@ -87,6 +93,7 @@ module individual
     procedure :: print_u => print_ic
     procedure :: print_wv_u => print_wv_ic
     procedure :: print_header_u => print_header_ic
+    procedure :: print_wv_u => print_wv_ic
     procedure :: print_header_wv_u => print_header_wv_ic
   end type TIndivCI
 
@@ -221,7 +228,7 @@ module individual
     implicit none
     class(TIndiv), intent(in) :: this, other
 
-    res = all(this%dvariables == other%dvariables)
+    res = this%id == other%id .or. all(this%dvariables == other%dvariables)
   end function dis_same
 
   logical function iis_same(this, other) result(res)
@@ -229,7 +236,7 @@ module individual
     class(TIndivI), intent(in) :: this
     class(TIndiv), intent(in) :: other
 
-    res = all(this%ivariables == other%ivariables)
+    res = this%id == other%id .or. all(this%ivariables == other%ivariables)
   end function iis_same
 
 
@@ -301,6 +308,56 @@ module individual
                  // nformat(size(this%constraints), "es15.8','") // "l0)"
     write(unit, format, advance='no') this%id, this%objectives, this%constraints, this%feasible
   end subroutine print_ic
+
+  ! ============================================================================
+
+  subroutine print_header_d(this, unit)
+    implicit none
+    class(TIndiv), intent(in) :: this
+    integer, intent(in) :: unit
+    integer :: l
+
+    l = size(this%objectives)
+    write(unit, "(a)", advance='no') "id," // join(serstr("obj", integers(l)), ",")
+  end subroutine print_header_d
+
+  subroutine print_header_i(this, unit)
+    implicit none
+    class(TIndivI), intent(in) :: this
+    integer, intent(in) :: unit
+    integer :: l
+
+    l = size(this%objectives)
+    write(unit, "(a)", advance='no') "id," // join(serstr("obj", integers(l)), ",")
+  end subroutine print_header_i
+
+  subroutine print_header_dc(this, unit)
+    implicit none
+    class(TIndivC), intent(in) :: this
+    integer, intent(in) :: unit
+    type(string), allocatable :: s(:)
+    integer :: l(2)
+
+    l(1) = size(this%objectives)
+    l(2) = size(this%constraints)
+    allocate(s(sum(l)), source=[serstr("obj", integers(l(1))), &
+                                serstr("con", integers(l(2)))])
+    write(unit, "(a)", advance='no') "id," // join(s, ",") // ",feasible"
+  end subroutine print_header_dc
+
+  subroutine print_header_ic(this, unit)
+    implicit none
+    class(TIndivCI), intent(in) :: this
+    integer, intent(in) :: unit
+    type(string), allocatable :: s(:)
+    integer :: l(2)
+
+    l(1) = size(this%objectives)
+    l(2) = size(this%constraints)
+    allocate(s(sum(l)), source=[serstr("obj", integers(l(1))), &
+                                serstr("con", integers(l(2)))])
+    write(unit, "(a)", advance='no') "id," // join(s, ",") // ",feasible"
+  end subroutine print_header_ic
 
 
   ! ============================================================================
@@ -378,62 +435,6 @@ module individual
     write(unit, format, advance='no') this%id, this%objectives, this%ivariables, this%constraints, this%feasible
   end subroutine print_wv_ic
 
-
-  ! ============================================================================
-  !
-  ! ============================================================================
-
-  subroutine print_header_d(this, unit)
-    implicit none
-    class(TIndiv), intent(in) :: this
-    integer, intent(in) :: unit
-    integer :: l
-
-    l = size(this%objectives)
-    write(unit, "(a)", advance='no') "id," // join(serstr("obj", integers(l)), ",")
-  end subroutine print_header_d
-
-  subroutine print_header_i(this, unit)
-    implicit none
-    class(TIndivI), intent(in) :: this
-    integer, intent(in) :: unit
-    integer :: l
-
-    l = size(this%objectives)
-    write(unit, "(a)", advance='no') "id," // join(serstr("obj", integers(l)), ",")
-  end subroutine print_header_i
-
-  subroutine print_header_dc(this, unit)
-    implicit none
-    class(TIndivC), intent(in) :: this
-    integer, intent(in) :: unit
-    type(string), allocatable :: s(:)
-    integer :: l(2)
-
-    l(1) = size(this%objectives)
-    l(2) = size(this%constraints)
-    allocate(s(sum(l)), source=[serstr("obj", integers(l(1))), &
-                                serstr("con", integers(l(2)))])
-    write(unit, "(a)", advance='no') "id," // join(s, ",") // ",feasible"
-  end subroutine print_header_dc
-
-  subroutine print_header_ic(this, unit)
-    implicit none
-    class(TIndivCI), intent(in) :: this
-    integer, intent(in) :: unit
-    type(string), allocatable :: s(:)
-    integer :: l(2)
-
-    l(1) = size(this%objectives)
-    l(2) = size(this%constraints)
-    allocate(s(sum(l)), source=[serstr("obj", integers(l(1))), &
-                                serstr("con", integers(l(2)))])
-    write(unit, "(a)", advance='no') "id," // join(s, ",") // ",feasible"
-  end subroutine print_header_ic
-
-
-  ! ============================================================================
-  !
   ! ============================================================================
 
   subroutine print_header_wv_d(this, unit)

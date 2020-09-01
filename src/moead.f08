@@ -13,6 +13,8 @@ module moead
 
   type :: TPopulation
     class(TIndiv), allocatable :: indiv
+    logical :: init     = .false.
+
     real(8), allocatable :: weight(:)
     integer, allocatable :: table(:)
     real(8), allocatable :: fitness(:)

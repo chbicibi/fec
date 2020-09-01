@@ -111,12 +111,11 @@ module nsga2c
       call system_clock(last_time)
       d = elapsed_seconds(this%start_time)
 
-      print "(a,3(i0,a))", &
-            "Progress: ", n, "steps finished, Elapsed: ", &
-            int(d), "s, Remain: ", int(d * (total-n) / (n+1)), "s"
-
-      print "('  ->feasible: 'i0'/'i0)", count_feasible(this%population), &
-                                         this%pop_size
+      print "(a,5(i0,a))", &
+            "Progress: ", n, "steps finished, Feasible: ",       &
+            count_feasible(this%population), "/", this%pop_size, &
+            ", Elapsed: ", int(d), "s, Remain: ",                &
+            int(d * (total-n) / (n+1)), "s"
     end if
   end subroutine logger
 
@@ -151,7 +150,7 @@ module nsga2c
     open(newunit=unit, file=filename)
       write(unit, "(a)", advance='no') "step,"
       call this%population(1)%indiv%print_header(unit)
-      write(unit, "(a)") ",rank,fitness,crowding-dist"
+      write(unit, "(a)") ",rank,fitness,crowding-dist,pid1,pid2"
 
       outer: do j = 1, size(this%history, dim=2)
         inner: do i = 1, this%pop_size
@@ -161,9 +160,12 @@ module nsga2c
               (feasible == "all" .or. xor(feasible == "only", .not. this%history(i, j)%indiv%feasible))) then
             write(unit, "(i0',')", advance='no') j - 1
             call this%print_indiv(this%history(i, j)%indiv, unit)
-            write(unit, "(','i0,2(','es15.8))") this%history(i, j)%rank,    &
-                                                this%history(i, j)%fitness, &
-                                                this%history(i, j)%crowding
+
+            write(unit, "(','i0,2(','es15.8),2(','i0))") &
+              this%history(i, j)%rank,      &
+              this%history(i, j)%fitness,   &
+              this%history(i, j)%crowding,  &
+              this%history(i, j)%indiv%parents_id
           end if
         end do inner
       end do outer
