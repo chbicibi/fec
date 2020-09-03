@@ -24,8 +24,8 @@ module individual
     generic :: get_variables => get_ivariables, get_dvariables, get_dvariables_proc
     generic :: obj => obj_1, obj_n
     generic :: print => print_u, print_up
-    generic :: print_wv => print_wv_u, print_wv_up
     generic :: print_header => print_header_u
+
     generic :: print_wv => print_wv_u, print_wv_up
     generic :: print_header_wv => print_header_wv_u
 
@@ -39,9 +39,8 @@ module individual
     procedure :: is_same => dis_same
     procedure :: print_u => print_d
     procedure :: print_up => print_dp
-    procedure :: print_wv_u => print_wv_d
-    procedure :: print_wv_up => print_wv_dp
     procedure :: print_header_u => print_header_d
+
     procedure :: print_wv_u => print_wv_d
     procedure :: print_wv_up => print_wv_dp
     procedure :: print_header_wv_u => print_header_wv_d
@@ -56,8 +55,8 @@ module individual
     procedure :: initialize_n => initialize_i
     procedure :: is_same => iis_same
     procedure :: print_u => print_i
-    procedure :: print_wv_u => print_wv_i
     procedure :: print_header_u => print_header_i
+
     procedure :: print_wv_u => print_wv_i
     procedure :: print_header_wv_u => print_header_wv_i
   end type TIndivI
@@ -78,9 +77,8 @@ module individual
 
     procedure :: print_u => print_dc
     procedure :: print_up => print_dcp
-    procedure :: print_wv_u => print_wv_dc
-    procedure :: print_wv_up => print_wv_dcp
     procedure :: print_header_u => print_header_dc
+
     procedure :: print_wv_u => print_wv_dc
     procedure :: print_wv_up => print_wv_dcp
     procedure :: print_header_wv_u => print_header_wv_dc
@@ -91,8 +89,8 @@ module individual
     contains
 
     procedure :: print_u => print_ic
-    procedure :: print_wv_u => print_wv_ic
     procedure :: print_header_u => print_header_ic
+
     procedure :: print_wv_u => print_wv_ic
     procedure :: print_header_wv_u => print_header_wv_ic
   end type TIndivCI

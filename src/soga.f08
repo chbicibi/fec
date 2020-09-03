@@ -28,9 +28,9 @@ module soga
     character(:), allocatable :: mutation_type
     character(:), allocatable :: fitness_type
 
-    logical :: elite_preservation = .false.
+    logical :: elite_preservation = .true.
     logical :: dup_rejection = .false.
-    logical :: sharing = .false.
+    logical :: sharing = .true.
     logical :: history_preservation = .true.
 
     real(8) :: fitness_weight = 0.1d0
@@ -66,6 +66,7 @@ module soga
     procedure :: run_default, run_with_hook
     procedure :: evolution
     procedure :: reproduce
+    procedure :: advance
     procedure :: evaluate_pop
     procedure :: calc_fitness
     procedure :: preserve_elite
@@ -202,30 +203,6 @@ module soga
     call this%logger(-1, num_generation)
   end subroutine run_default
 
-
-  ! ============================================================================
-  ! calculation body
-  ! ============================================================================
-
-  subroutine run_default(this, num_generation)
-    implicit none
-    class(TSOGA), intent(inout) :: this
-    integer, intent(in) :: num_generation
-    integer :: offset, i
-
-    call this%alloc_history(num_generation, offset)
-    call this%logger(0, num_generation)
-
-    do i = 1, num_generation
-      this%current_step = i
-      call this%evolution
-      call this%keep_population(i + offset)
-      call this%logger(i, num_generation)
-    end do
-
-    call this%logger(-1, num_generation)
-  end subroutine run_default
-
   subroutine run_with_hook(this, num_generation, proc)
     implicit none
 
@@ -311,7 +288,8 @@ module soga
     ! stop
     ! return
 
-    call move_alloc(from=next_population, to=this%population)
+    ! call move_alloc(from=next_population, to=this%population)
+    call this%advance(next_population)
   end subroutine evolution
 
   subroutine reproduce(this, index, children)
@@ -338,6 +316,14 @@ module soga
       call children(i)%clamp_variables(lower=0d0, upper=1d0)
     end do
   end subroutine reproduce
+
+  subroutine advance(this, next_population)
+    implicit none
+    class(TSOGA), intent(inout) :: this
+    type(TPopulation), intent(inout), allocatable :: next_population(:)
+
+    call move_alloc(from=next_population, to=this%population)
+  end subroutine advance
 
   subroutine evaluate_pop(this, population)
     implicit none

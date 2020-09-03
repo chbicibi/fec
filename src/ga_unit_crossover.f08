@@ -101,28 +101,59 @@ submodule (ga_unit) ga_unit_crossover
   function crossover_sbx(eta_c, parents) result(children)
     implicit none
     real(8), intent(in) :: eta_c, parents(:, :)
+    integer, allocatable :: idx(:)
     real(8), allocatable :: children(:, :)
-    real(8), allocatable :: x1(:), x2(:), sum(:), diff(:), u(:)
+    real(8), allocatable :: x1(:), x2(:), s(:), d(:), u(:)
     real(8), allocatable :: alpha(:, :), beta(:, :), betaq(:, :)
-    integer :: s
+    integer :: n, i
 
-    s = size(parents, dim=1)
-    allocate(x1(s), source=min(parents(:, 1), parents(:, 2)))
-    allocate(x2(s), source=max(parents(:, 1), parents(:, 2)))
-    allocate(u(s), source=random_array(s))
-    allocate(sum(s), source= x2 + x1)
-    allocate(diff(s), source= x2 - x1)
+    n = size(parents, dim=1)
+    allocate(idx(n), source=minloc(parents, 2))
+    allocate(x1(n), source=[(parents(i, idx(i)), i = 1, n)])
+    allocate(x2(n), source=[(parents(i, 3 - idx(i)), i = 1, n)])
+    allocate(s(n), source=x2 + x1)
+    allocate(d(n), source=max(x2 - x1, 1d-5))
+    allocate(u(n), source=random_array(n))
 
-    where (diff == 0d0) diff = 1d0
-    beta = 1d0 + 2d0 / reshape([x1 / diff, (1d0 - x2) / diff], [s, 2])
+    beta = 1d0 + 2d0 * reshape([x1 / d, (1d0 - x2) / d], [n, 2])
     alpha = 2d0 - beta ** (-eta_c - 1d0)
     betaq = spread(u, 2, 2)
+
     where (betaq <= 1d0 / alpha)
       betaq = (betaq * alpha) ** (1d0 / (eta_c + 1d0))
     else where
       betaq = (2d0 - betaq * alpha) ** (-1d0 / (eta_c + 1d0))
     end where
-    children = reshape(0.5d0 * [sum - betaq(:, 1) * diff, sum + betaq(:, 2) * diff], [s, 2])
+
+    children = reshape(0.5d0 * [s - betaq(:, 1) * d, &
+                                s + betaq(:, 2) * d], [n, 2])
+    children = reshape([(children(i, idx(i)), i = 1, n), &
+                        (children(i, 3 - idx(i)), i = 1, n)], [n, 2])
+
+    ! where (parents(:, 1) <= parents(:, 2))
+    !   idx_le = 1
+    ! else where
+    !   idx_le = 2
+    ! end where
+
+    ! s = size(parents, dim=1)
+    ! allocate(x1(s), source=min(parents(:, 1), parents(:, 2)))
+    ! allocate(x2(s), source=max(parents(:, 1), parents(:, 2)))
+    ! allocate(u(s), source=random_array(s))
+    ! allocate(sum(s), source= x2 + x1)
+    ! allocate(diff(s), source= x2 - x1)
+
+    ! where (diff == 0d0) diff = 1d0
+
+    ! beta = 1d0 + 2d0 * reshape([x1 / diff, (1d0 - x2) / diff], [s, 2])
+    ! alpha = 2d0 - beta ** (-eta_c - 1d0)
+    ! betaq = spread(u, 2, 2)
+    ! where (betaq <= 1d0 / alpha)
+    !   betaq = (betaq * alpha) ** (1d0 / (eta_c + 1d0))
+    ! else where
+    !   betaq = (2d0 - betaq * alpha) ** (-1d0 / (eta_c + 1d0))
+    ! end where
+    ! children = reshape(0.5d0 * [sum - betaq(:, 1) * diff, sum + betaq(:, 2) * diff], [s, 2])
   end function crossover_sbx
 
   function crossover_blx(alpha, parents) result(children)

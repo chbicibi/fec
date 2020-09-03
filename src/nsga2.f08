@@ -18,6 +18,7 @@ module nsga2
 
     procedure :: initialize_instance3, initialize_instance4
     procedure :: set_prototype1
+    procedure :: advance
     procedure :: calc_fitness
     procedure :: preserve_elite
     procedure :: save_result_elite

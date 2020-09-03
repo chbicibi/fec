@@ -48,7 +48,7 @@ module nsga2c
     integer :: pop_size, i
 
     pop_size = size(population)
-    objectives = reshape([(population(i)%indiv%objectives(1:this%num_obj), i = 1, pop_size)], &
+    objectives = reshape([(population(i)%indiv%objectives, i = 1, pop_size)], &
                          [this%num_obj, pop_size])
     constraints = [(scalar_constraints(population(i)%indiv%constraints), i = 1, pop_size)]
     feasible = [(population(i)%indiv%feasible, i = 1, pop_size)]
@@ -112,7 +112,7 @@ module nsga2c
       d = elapsed_seconds(this%start_time)
 
       print "(a,5(i0,a))", &
-            "Progress: ", n, "steps finished, Feasible: ",       &
+            "Progress: ", n, "steps, Feasible: ",                &
             count_feasible(this%population), "/", this%pop_size, &
             ", Elapsed: ", int(d), "s, Remain: ",                &
             int(d * (total-n) / (n+1)), "s"
